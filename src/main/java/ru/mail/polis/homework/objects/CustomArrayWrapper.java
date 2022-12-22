@@ -19,7 +19,7 @@ public class CustomArrayWrapper implements Iterable<Integer> {
     private int position;               // следующая позиция куда будет вставлен элемент
     private int modCount;
 
-    private enum State {
+    private enum IteratorType {
         ORDINARY, EVEN, ODD
     }
 
@@ -37,6 +37,7 @@ public class CustomArrayWrapper implements Iterable<Integer> {
     public void edit(int index, int value) {
         checkIndex(index);
         array[index] = value;
+        modCount++;
     }
 
     public int get(int index) {
@@ -56,7 +57,7 @@ public class CustomArrayWrapper implements Iterable<Integer> {
      */
     @Override
     public Iterator<Integer> iterator() {
-        return new MyIterator(State.ORDINARY);
+        return new MyIterator(IteratorType.ORDINARY);
     }
 
     /**
@@ -66,7 +67,7 @@ public class CustomArrayWrapper implements Iterable<Integer> {
      * @return Iterator for EVEN elements
      */
     public Iterator<Integer> evenIterator() {
-        return new MyIterator(State.EVEN);
+        return new MyIterator(IteratorType.EVEN);
     }
 
     /**
@@ -76,18 +77,18 @@ public class CustomArrayWrapper implements Iterable<Integer> {
      * @return Iterator for ODD elements
      */
     public Iterator<Integer> oddIterator() {
-        return new MyIterator(State.ODD);
+        return new MyIterator(IteratorType.ODD);
     }
 
-    public class MyIterator implements Iterator {
+    public class MyIterator implements Iterator<Integer> {
 
         private int pos;
-        private final State state;
+        private final IteratorType iteratorType;
         private final int fixedModCount = modCount;
 
-        public MyIterator(State state) {
-            this.state = state;
-            pos = (state == State.EVEN) ? 1 : 0;
+        public MyIterator(IteratorType state) {
+            this.iteratorType = state;
+            pos = (state == IteratorType.EVEN) ? 1 : 0;
         }
 
         @Override
@@ -96,14 +97,14 @@ public class CustomArrayWrapper implements Iterable<Integer> {
         }
 
         @Override
-        public Object next() {
+        public Integer next() {
             if (fixedModCount != modCount) {
                 throw new ConcurrentModificationException();
             } else if (!hasNext()) {
                 throw new NoSuchElementException();
             }
             int element = get(pos);
-            pos += (state != State.ORDINARY) ? 2 : 1;
+            pos += (iteratorType != IteratorType.ORDINARY) ? 2 : 1;
             return element;
         }
     }

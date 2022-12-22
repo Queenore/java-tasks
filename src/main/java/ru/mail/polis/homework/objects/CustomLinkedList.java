@@ -11,7 +11,7 @@ import java.util.NoSuchElementException;
 public class CustomLinkedList implements Iterable<Integer> {
 
     private Node head;
-    private Node last;
+    private Node tail;
     private int size;
     private int modCount;
 
@@ -35,10 +35,10 @@ public class CustomLinkedList implements Iterable<Integer> {
     public void add(int value) {
         if (size() == 0) {
             head = new Node(value);
-            last = head;
+            tail = head;
         } else {
-            last.setNext(new Node(value));
-            last = last.next;
+            tail.setNext(new Node(value));
+            tail = tail.next;
         }
         size++;
         modCount++;
@@ -54,7 +54,7 @@ public class CustomLinkedList implements Iterable<Integer> {
         if (index >= size()) {
             throw new IndexOutOfBoundsException(String.valueOf(index));
         } else if (index == size() - 1) {
-            return last.value;
+            return tail.value;
         }
         Node currNode = head;
         for (int i = 1; i <= index; i++) {
@@ -74,7 +74,7 @@ public class CustomLinkedList implements Iterable<Integer> {
      * @param value - data for create Node.
      */
     public void add(int i, int value) {
-        if (i > size()) {
+        if (i > size() || i < 0) {
             throw new IndexOutOfBoundsException(String.valueOf(i));
         }
         if (i == 0) {
@@ -97,7 +97,7 @@ public class CustomLinkedList implements Iterable<Integer> {
     /**
      * 2 тугрика
      * Реализовать метод:
-     * Удаляет элемент в указанной позиции, при это связывая его соседние элементы друг с другом.
+     * Удаляет элемент в указанной позиции, при этом связывая его соседние элементы друг с другом.
      * Если был передан невалидный index - надо выкинуть исключение IndexOutOfBoundsException.
      * throw new IndexOutOfBoundsException(i);
      *
@@ -108,20 +108,21 @@ public class CustomLinkedList implements Iterable<Integer> {
             throw new IndexOutOfBoundsException(String.valueOf(index));
         }
         Node currNode = head;
-        for (int i = 1; i < index; i++) {
-            currNode = currNode.next;
-        }
         if (index == 0) {
             head = currNode.next;
-        }
-        if (index < size() - 1) {
-            currNode.next = currNode.next.next;
         } else {
-            currNode.next = null;
-            last = currNode;
+            for(int i = 1; i < index; i++) {
+                currNode = currNode.next;
+            }
+            if (currNode.next == tail) {
+                currNode.next = null;
+                tail = currNode;
+            } else {
+                currNode.next = currNode.next.next;
+            }
         }
         size--;
-        modCount--;
+        modCount++;
     }
 
     /**
@@ -138,7 +139,7 @@ public class CustomLinkedList implements Iterable<Integer> {
         for (int i = size() - 2; i > -1; i--) {
             currNode.next = new Node(get(i));
             if (i == 0) {
-                last = currNode.next;
+                tail = currNode.next;
             }
             currNode = currNode.next;
         }
@@ -178,10 +179,10 @@ public class CustomLinkedList implements Iterable<Integer> {
         return new ListIterator();
     }
 
-    private class ListIterator implements Iterator {
+    private class ListIterator implements Iterator<Integer> {
 
         private int pos;
-        private int fixedModCount;
+        private final int fixedModCount = modCount;
 
         @Override
         public boolean hasNext() {
@@ -190,9 +191,6 @@ public class CustomLinkedList implements Iterable<Integer> {
 
         @Override
         public Integer next() {
-            if (pos == 0) {
-                fixedModCount = modCount;
-            }
             if (fixedModCount != modCount) {
                 throw new ConcurrentModificationException();
             } else if (!hasNext()) {

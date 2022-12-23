@@ -12,5 +12,5 @@ public interface StateHandler<State> {
      * Возвращает класс State, который этот handler умеет обрабатывать.
      * Необходимо типизировать таким образом, чтобы возвращаемый класс был не любым, а наследником State.
      */
-    State getHandlingStateClass();
+    Class<? extends State> getHandlingStateClass();
 }

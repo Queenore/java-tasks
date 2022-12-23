@@ -1,9 +1,8 @@
 package ru.mail.polis.homework.generics.bot.handler;
 
 import ru.mail.polis.homework.generics.bot.state.ExampleState;
-import ru.mail.polis.homework.generics.bot.state.State;
 
-public class ExampleStateHandler implements StateHandler<State> {
+public class ExampleStateHandler implements StateHandler<ExampleState> {
 
     @Override
     public void handle() {
@@ -17,7 +16,7 @@ public class ExampleStateHandler implements StateHandler<State> {
      * @return ExampleState
      */
     @Override
-    public ExampleState getHandlingStateClass() {
-        return null;
+    public Class<ExampleState> getHandlingStateClass() {
+        return ExampleState.class;
     }
 }

@@ -8,7 +8,7 @@ import java.util.List;
 
 public class Bot {
 
-    private final HashMap<State, StateHandler<State>> handlersMap = new HashMap<>();
+    private final HashMap<Class<? extends State>, StateHandler<State>> handlersMap = new HashMap<>();
 
     /**
      * Конструктор бота, которому на вход подаются хэндлеры состояний.
@@ -28,8 +28,8 @@ public class Bot {
      * 1 тугрик
      */
     public void handleState(State state) {
-        if (handlersMap.containsKey(state)) {
-            handlersMap.get(state).handle();
+        if (handlersMap.containsKey(state.getClass())) {
+            handlersMap.get(state.getClass()).handle();
         }
     }
 }

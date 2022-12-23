@@ -17,29 +17,36 @@ import java.util.ArrayDeque;
 public class ValidatorForParentheses {
 
     private static boolean assertBrackets(char a, char b) {
-        return a == '[' && b == ']' || a == '{' && b == '}' || a == '<' && b == '>' || a == '(' && b == ')';
+        return (a == '[' && b == ']') || (a == '{' && b == '}') || (a == '<' && b == '>') || (a == '(' && b == ')');
     }
 
     private static boolean isBracket(char a) {
         return a == '[' || a == ']' || a == '{' || a == '}' || a == '<' || a == '>' || a == '(' || a == ')';
     }
 
+    private static boolean isCloseBracket(char a) {
+        return a == ']' || a == '}'|| a == '>' || a == ')';
+    }
+
     public static boolean validate(String value) {
-        if (value == null || value.equals("")) {
+        if (value == null || value.isEmpty()) {
             return false;
         }
         ArrayDeque<Character> deque = new ArrayDeque<>();
         boolean wasBracketFlag = false;
         for (int i = 0; i < value.length(); i++) {
             char character = value.charAt(i);
-            if (isBracket(character)) {
-                if (!deque.isEmpty() && assertBrackets(deque.peekFirst(), character)) {
-                    deque.pollFirst();
-                } else {
-                    deque.addFirst(character);
-                }
-                wasBracketFlag = true;
+            if (!isBracket(character)) {
+                continue;
             }
+            if (!deque.isEmpty() && assertBrackets(deque.peekLast(), character)) {
+                deque.pollLast();
+            } else if (isCloseBracket(character)){
+                return false;
+            } else {
+                deque.addLast(character);
+            }
+            wasBracketFlag = true;
         }
         return deque.isEmpty() && wasBracketFlag;
     }

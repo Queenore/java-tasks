@@ -15,7 +15,11 @@ import java.util.ArrayList;
  */
 public class CustomDictionary {
 
-    private final Map<String, String> map = new HashMap<>();
+    private final Map<String, String> map;
+
+    public CustomDictionary() {
+        this.map = new HashMap<>();
+    }
 
     /**
      * Сохранить строку в структуру данных

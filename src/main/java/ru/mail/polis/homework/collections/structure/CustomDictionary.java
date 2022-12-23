@@ -1,6 +1,11 @@
 package ru.mail.polis.homework.collections.structure;
 
-import java.util.*;
+import java.util.Objects;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * Задание оценивается в 4 тугрика.
@@ -10,7 +15,7 @@ import java.util.*;
  */
 public class CustomDictionary {
 
-    private final HashMap<String, String> map = new HashMap<>();
+    private final Map<String, String> map = new HashMap<>();
 
     /**
      * Сохранить строку в структуру данных
@@ -21,7 +26,7 @@ public class CustomDictionary {
      * Сложность - O(N)
      */
     public boolean add(String value) {
-        if (value == null || value.equals("")) {
+        if (value == null || value.isEmpty()) {
             throw new IllegalArgumentException();
         } else if (map.containsKey(value)) { // T(N) = O(1)
             return false;
@@ -32,7 +37,7 @@ public class CustomDictionary {
     }
 
     private String sortedLowerCaseStr(String value) {
-        char[] chars = value.toLowerCase(Locale.ROOT).toCharArray();
+        char[] chars = value.toLowerCase().toCharArray();
         Arrays.sort(chars);
         return new String(chars);
     }
@@ -58,11 +63,7 @@ public class CustomDictionary {
      * Сложность - O(1)
      */
     public boolean remove(String value) {
-        if (map.size() == 0 || !map.containsKey(value)) { // T(N) = O(1)
-            return false;
-        }
-        map.remove(value); // T(N) = O(1)
-        return true;
+        return Objects.nonNull(map.remove(value)); // T(N) = O(1)
     }
 
     /**
@@ -82,13 +83,13 @@ public class CustomDictionary {
      * @return - список слов которые состоят из тех же букв, что и передаваемая
      * строка.
      * <p>
-     * Сложность - O(N^2)
+     * Сложность - O(N)
      */
     public List<String> getSimilarWords(String value) {
         ArrayList<String> list = new ArrayList<>();
         String inputStr = sortedLowerCaseStr(value);
-        for (Map.Entry<String, String> entry: map.entrySet()) { // T(N) = O(N)
-            if (entry.getValue().equals(inputStr)) { // T(N) = O(N)
+        for (Map.Entry<String, String> entry : map.entrySet()) { // T(N) = O(N)
+            if (entry.getValue().equals(inputStr)) { // T(N) = O(1)
                 list.add(entry.getKey()); // T(N) = O(1)
             }
         }

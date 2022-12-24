@@ -16,41 +16,40 @@ public class CopyFile {
     public static void copyFiles(String pathFrom, String pathTo) throws IOException {
         File fileFrom = new File(pathFrom);
         Path destinationPath = Paths.get(pathTo);
-        if (fileFrom.isDirectory()) {
-            Files.createDirectories(destinationPath);
-            int pathFromNameCount = Paths.get(pathFrom).getNameCount();
-            Files.walkFileTree(Paths.get(pathFrom), new SimpleFileVisitor<Path>() {
-                @Override
-                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-                    int currDirNameCount = dir.getNameCount();
-                    if (currDirNameCount - pathFromNameCount > 0) {
-                        Path newPathPart = dir.subpath(pathFromNameCount, currDirNameCount);
-                        Path newDirPath = destinationPath.resolve(newPathPart);
-                        Files.createDirectory(newDirPath);
-                    }
-                    return FileVisitResult.CONTINUE;
-                }
-
-                @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                    Path newPathPart = file.subpath(pathFromNameCount, file.getNameCount());
-                    Path newFilePath = destinationPath.resolve(newPathPart);
-                    Files.createFile(newFilePath.toAbsolutePath());
-                    fileCopy(file, newFilePath);
-                    return FileVisitResult.CONTINUE;
-                }
-            });
-        } else if (fileFrom.isFile()) {
+        if (fileFrom.isFile()) {
             Files.createDirectories(destinationPath.getParent());
             fileCopy(Paths.get(pathFrom), destinationPath);
+            return;
         }
+        if (!fileFrom.isDirectory()) {
+            return;
+        }
+        Files.createDirectories(destinationPath);
+        Files.walkFileTree(Paths.get(pathFrom), new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                Path newPathPart = Paths.get(pathFrom).relativize(dir);
+                Path newDirPath = destinationPath.resolve(newPathPart);
+                File newDir = new File(newDirPath.toString());
+                if (!newDir.exists()) {
+                    Files.createDirectory(newDirPath);
+                }
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+                Path newPathPart = Paths.get(pathFrom).relativize(file);
+                Path newFilePath = destinationPath.resolve(newPathPart);
+                fileCopy(file, newFilePath);
+                return FileVisitResult.CONTINUE;
+            }
+        });
     }
 
     private static void fileCopy(Path pathFrom, Path pathTo) {
-        try (Writer writer = new BufferedWriter(
-                new OutputStreamWriter(
+        try (Writer writer = new OutputStreamWriter(
                         new FileOutputStream(pathTo.toAbsolutePath().toString()), StandardCharsets.UTF_8
-                )
         )) {
             try (BufferedReader reader = new BufferedReader(new FileReader(pathFrom.toAbsolutePath().toString()))) {
                 String line;

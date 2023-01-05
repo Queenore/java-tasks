@@ -10,18 +10,14 @@ import java.util.Objects;
  * 1 тугрик
  */
 public class Animal implements Serializable {
-    private boolean isPet;
-    private boolean isWild;
-    private Integer legsCount;
-    private String name;
-    private Double age;
-    private Byte id;
-    private MoveType moveType;
-    private LivingEnvironment livingEnvironment;
-
-    public Animal() {
-
-    }
+    private final boolean isPet;
+    private final boolean isWild;
+    private final Integer legsCount;
+    private final String name;
+    private final Double age;
+    private final Byte id;
+    private final MoveType moveType;
+    private final LivingEnvironment livingEnvironment;
 
     public Animal(boolean isPet, boolean isWild, Integer legsCount, String name, Double age, MoveType moveType,
                   Byte id, LivingEnvironment livingEnvironment) {

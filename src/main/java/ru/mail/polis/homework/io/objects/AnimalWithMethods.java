@@ -8,6 +8,15 @@ import java.util.Objects;
  * 3 тугрика
  */
 public class AnimalWithMethods implements Serializable {
+    private static final int IS_PET_BYTE = 0b1;
+    private static final int IS_WILD_BYTE = 0b10;
+    private static final int LEGS_COUNT_BYTE = 0b100;
+    private static final int NAME_BYTE = 0b1000;
+    private static final int AGE_BYTE = 0b10000;
+    private static final int MOVE_TYPE_BYTE = 0b100000;
+    private static final int ID_BYTE = 0b1000000;
+    private static final int LIVING_ENVIRONMENT_BYTE = 0b10000000;
+
     private boolean isPet;
     private boolean isWild;
     private Integer legsCount;
@@ -17,12 +26,8 @@ public class AnimalWithMethods implements Serializable {
     private Byte id;
     private LivingEnvironment livingEnvironment;
 
-    public AnimalWithMethods() {
-
-    }
-
     public AnimalWithMethods(boolean isPet, boolean isWild, Integer legsCount, String name, Double age,
-                             MoveType moveType, Byte id, LivingEnvironment livingEnvironment) {
+                                MoveType moveType, Byte id, LivingEnvironment livingEnvironment) {
         this.isPet = isPet;
         this.isWild = isWild;
         this.legsCount = legsCount;
@@ -34,6 +39,8 @@ public class AnimalWithMethods implements Serializable {
     }
 
     public static class LivingEnvironment implements Serializable {
+        private static final byte WEATHER_BYTE = 0b1;
+
         private double temperature;
         private Weather weather;
 
@@ -63,24 +70,24 @@ public class AnimalWithMethods implements Serializable {
                     '}';
         }
 
-        private void writeObject(ObjectOutputStream out) throws IOException {
+        public void writeObject(ObjectOutput out) throws IOException {
+            byte lEFieldsFlag = (weather != null) ? WEATHER_BYTE : 0;
+            out.writeByte(lEFieldsFlag);
             out.writeDouble(temperature);
-            out.writeByte(assertNullGetBit(weather));
             if (weather != null) {
-                int enumIndex = -1;
                 for (int i = 0; i < Weather.values().length; i++) {
                     if (Weather.values()[i] == weather) {
-                        enumIndex = i;
+                        out.writeByte(i);
                         break;
                     }
                 }
-                out.writeByte(enumIndex);
             }
         }
 
-        private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        public void readObject(ObjectInput in) throws IOException {
+            byte lEFieldsFlag = in.readByte();
             temperature = in.readDouble();
-            if (in.readByte() == 1) {
+            if ((lEFieldsFlag & WEATHER_BYTE) > 0) {
                 weather = Weather.values()[in.readByte()];
             }
         }
@@ -108,7 +115,7 @@ public class AnimalWithMethods implements Serializable {
 
     @Override
     public String toString() {
-        return "AnimalWithMethods{" +
+        return "AnimalExternalizable{" +
                 "isPet=" + isPet +
                 ", isWild=" + isWild +
                 ", legsCount=" + legsCount +
@@ -120,66 +127,68 @@ public class AnimalWithMethods implements Serializable {
                 '}';
     }
 
-    private void writeObject(ObjectOutputStream out) throws IOException {
-        out.writeByte(isPet ? 1 : 0);
-        out.writeByte(isWild ? 1 : 0);
-        out.writeByte(assertNullGetBit(legsCount));
+    private int getFieldsFlag() {
+        int fieldsFlagByte = 0;
+        fieldsFlagByte |= (isPet) ? IS_PET_BYTE : 0;
+        fieldsFlagByte |= (isWild) ? IS_WILD_BYTE : 0;
+        fieldsFlagByte |= (legsCount != null) ? LEGS_COUNT_BYTE : 0;
+        fieldsFlagByte |= (name != null) ? NAME_BYTE : 0;
+        fieldsFlagByte |= (age != null) ? AGE_BYTE : 0;
+        fieldsFlagByte |= (moveType != null) ? MOVE_TYPE_BYTE : 0;
+        fieldsFlagByte |= (id != null) ? ID_BYTE : 0;
+        fieldsFlagByte |= (livingEnvironment != null) ? LIVING_ENVIRONMENT_BYTE : 0;
+        return fieldsFlagByte;
+    }
+
+    public void writeObject(ObjectOutput out) throws IOException {
+        int fieldsFlag = getFieldsFlag();
+        out.writeByte(fieldsFlag);
         if (legsCount != null) {
             out.writeByte(legsCount);
         }
-        out.writeByte(assertNullGetBit(name));
         if (name != null) {
             out.writeUTF(name);
         }
-        out.writeByte(assertNullGetBit(age));
         if (age != null) {
             out.writeDouble(age);
         }
-        out.writeByte(assertNullGetBit(moveType));
         if (moveType != null) {
-            int enumIndex = -1;
             for (int i = 0; i < MoveType.values().length; i++) {
                 if (MoveType.values()[i] == moveType) {
-                    enumIndex = i;
+                    out.writeByte(i);
                     break;
                 }
             }
-            out.writeByte(enumIndex);
         }
-        out.writeByte(assertNullGetBit(id));
         if (id != null) {
             out.writeByte(id);
         }
-        out.writeByte(assertNullGetBit(livingEnvironment));
         if (livingEnvironment != null) {
             out.writeObject(livingEnvironment);
         }
     }
 
-    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-        isPet = in.readByte()  > 0;
-        isWild = in.readByte()  > 0;
-        if (in.readByte()  > 0) {
+    public void readObject(ObjectInput in) throws IOException, ClassNotFoundException {
+        byte fieldsFlag = in.readByte();
+        isPet = (IS_PET_BYTE & fieldsFlag) > 0;
+        isWild = (IS_WILD_BYTE & fieldsFlag) > 0;
+        if ((LEGS_COUNT_BYTE & fieldsFlag) > 0) {
             legsCount = (int) in.readByte();
         }
-        if (in.readByte()  > 0) {
+        if ((NAME_BYTE & fieldsFlag) > 0) {
             name = in.readUTF();
         }
-        if (in.readByte()  > 0) {
+        if ((AGE_BYTE & fieldsFlag) > 0) {
             age = in.readDouble();
         }
-        if (in.readByte()  > 0) {
+        if ((MOVE_TYPE_BYTE & fieldsFlag) > 0) {
             moveType = MoveType.values()[in.readByte()];
         }
-        if (in.readByte()  > 0) {
+        if ((ID_BYTE & fieldsFlag) > 0) {
             id = in.readByte();
         }
-        if (in.readByte()  > 0) {
+        if ((LIVING_ENVIRONMENT_BYTE & fieldsFlag) > 0) {
             livingEnvironment = (LivingEnvironment) in.readObject();
         }
-    }
-
-    private static int assertNullGetBit(Object object) {
-        return object == null ? 0 : 1;
     }
 }

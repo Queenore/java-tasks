@@ -3,7 +3,6 @@ package ru.mail.polis.homework.io;
 import org.junit.Test;
 import ru.mail.polis.homework.io.objects.*;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -21,15 +20,11 @@ public class SerializerTests {
     public void autoSerializeTest() throws IOException {
         List<Animal> inputList = randomAnimalList();
         String path = Paths.get("src", "test", "resources", "serialize", "auto-serialize").toAbsolutePath().toString();
-        File file = new File(path);
-        file.getParentFile().mkdirs();
-        file.createNewFile();
         Serializer serializer = new Serializer();
 
         long startWriteTime = System.currentTimeMillis();
         serializer.defaultSerialize(inputList, path);
         long endWriteTime = System.currentTimeMillis();
-        long startReadTime = System.currentTimeMillis();
         List<Animal> deserializeList = serializer.defaultDeserialize(path);
         long endReadTime = System.currentTimeMillis();
 
@@ -39,7 +34,7 @@ public class SerializerTests {
         }
 
         double finalWriteTime = (endWriteTime - startWriteTime) / 1000.0;
-        double finalReadTime = (endReadTime - startReadTime) / 1000.0;
+        double finalReadTime = (endReadTime - endWriteTime) / 1000.0;
         System.out.println("autoSerializeTest:\n\t\twrite time = " + finalWriteTime + " sec\n" +
                 "\t\tread time = " + finalReadTime + " sec");
     }
@@ -48,15 +43,11 @@ public class SerializerTests {
     public void serializeWithMethodsTest() throws IOException {
         List<AnimalWithMethods> inputList = randomAnimalWithMethodsList();
         String path = Paths.get("src", "test", "resources", "serialize", "serialize-with-methods").toAbsolutePath().toString();
-        File file = new File(path);
-        file.getParentFile().mkdirs();
-        file.createNewFile();
         Serializer serializer = new Serializer();
 
         long startWriteTime = System.currentTimeMillis();
         serializer.serializeWithMethods(inputList, path);
         long endWriteTime = System.currentTimeMillis();
-        long startReadTime = System.currentTimeMillis();
         List<AnimalWithMethods> deserializeList = serializer.deserializeWithMethods(path);
         long endReadTime = System.currentTimeMillis();
 
@@ -66,7 +57,7 @@ public class SerializerTests {
         }
 
         double finalWriteTime = (endWriteTime - startWriteTime) / 1000.0;
-        double finalReadTime = (endReadTime - startReadTime) / 1000.0;
+        double finalReadTime = (endReadTime - endWriteTime) / 1000.0;
         System.out.println("serializeWithMethodsTest:\n\t\twrite time = " + finalWriteTime + " sec\n" +
                 "\t\tread time = " + finalReadTime + " sec");
     }
@@ -76,15 +67,11 @@ public class SerializerTests {
     public void externalizeTest() throws IOException {
         List<AnimalExternalizable> inputList = randomAnimalExternalizableList();
         String path = Paths.get("src", "test", "resources", "serialize", "externalizable").toAbsolutePath().toString();
-        File file = new File(path);
-        file.getParentFile().mkdirs();
-        file.createNewFile();
         Serializer serializer = new Serializer();
 
         long startWriteTime = System.currentTimeMillis();
         serializer.serializeWithExternalizable(inputList, path);
         long endWriteTime = System.currentTimeMillis();
-        long startReadTime = System.currentTimeMillis();
         List<AnimalExternalizable> deserializeList = serializer.deserializeWithExternalizable(path);
         long endReadTime = System.currentTimeMillis();
 
@@ -94,7 +81,7 @@ public class SerializerTests {
         }
 
         double finalWriteTime = (endWriteTime - startWriteTime) / 1000.0;
-        double finalReadTime = (endReadTime - startReadTime) / 1000.0;
+        double finalReadTime = (endReadTime - endWriteTime) / 1000.0;
         System.out.println("externalizeTest:\n\t\twrite time = " + finalWriteTime + " sec\n" +
                 "\t\tread time = " + finalReadTime + " sec");
     }
@@ -103,15 +90,11 @@ public class SerializerTests {
     public void customSerializeTest() throws IOException {
         List<Animal> inputList = randomAnimalList();
         String path = Paths.get("src", "test", "resources", "serialize", "custom-serialize").toAbsolutePath().toString();
-        File file = new File(path);
-        file.getParentFile().mkdirs();
-        file.createNewFile();
         Serializer serializer = new Serializer();
 
         long startWriteTime = System.currentTimeMillis();
         serializer.customSerialize(inputList, path);
         long endWriteTime = System.currentTimeMillis();
-        long startReadTime = System.currentTimeMillis();
         List<Animal> deserializeList = serializer.customDeserialize(path);
         long endReadTime = System.currentTimeMillis();
 
@@ -121,7 +104,7 @@ public class SerializerTests {
         }
 
         double finalWriteTime = (endWriteTime - startWriteTime) / 1000.0;
-        double finalReadTime = (endReadTime - startReadTime) / 1000.0;
+        double finalReadTime = (endReadTime - endWriteTime) / 1000.0;
         System.out.println("customSerializeTest:\n\t\twrite time = " + finalWriteTime + " sec\n" +
                 "\t\tread time = " + finalReadTime + " sec");
     }
@@ -206,12 +189,12 @@ public class SerializerTests {
         }
         String name = Math.random() < 0.2 ? null : new String(charArray);
 
-        int pickMoveType = new Random().nextInt(MoveType.values().length);
-        MoveType moveType = Math.random() < 0.2 ? null : MoveType.values()[pickMoveType];
+        int moveTypeIndex = new Random().nextInt(MoveType.values().length);
+        MoveType moveType = Math.random() < 0.2 ? null : MoveType.values()[moveTypeIndex];
 
         double temperature = ThreadLocalRandom.current().nextDouble(-30, 30);
-        int pickWeatherIndex = new Random().nextInt(Weather.values().length);
-        Weather weather = Math.random() < 0.2 ? null : Weather.values()[pickWeatherIndex];
+        int weatherIndex = new Random().nextInt(Weather.values().length);
+        Weather weather = Math.random() < 0.2 ? null : Weather.values()[weatherIndex];
         Animal.LivingEnvironment livingEnvironment = Math.random() < 0.2 ?
                 null :
                 new Animal.LivingEnvironment(temperature, weather);

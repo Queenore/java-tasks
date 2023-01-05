@@ -154,73 +154,87 @@ public class Serializer {
      * @param animals  Список животных для сериализации
      * @param fileName файл, в который "пишем" животных
      */
+    private static final int IS_PET_BYTE = 0b1;
+    private static final int IS_WILD_BYTE = 0b10;
+    private static final int LEGS_COUNT_BYTE = 0b100;
+    private static final int NAME_BYTE = 0b1000;
+    private static final int AGE_BYTE = 0b10000;
+    private static final int MOVE_TYPE_BYTE = 0b100000;
+    private static final int ID_BYTE = 0b1000000;
+    private static final int LIVING_ENVIRONMENT_BYTE = 0b10000000;
+    private static final byte WEATHER_BYTE = 0b1;
+
+    private int getAnimalFieldsFlag(Animal animal) {
+        int fieldsFlagByte = 0;
+        fieldsFlagByte |= (animal.isPet()) ? IS_PET_BYTE : 0;
+        fieldsFlagByte |= (animal.isWild()) ? IS_WILD_BYTE : 0;
+        fieldsFlagByte |= (animal.getLegsCount() != null) ? LEGS_COUNT_BYTE : 0;
+        fieldsFlagByte |= (animal.getName() != null) ? NAME_BYTE : 0;
+        fieldsFlagByte |= (animal.getAge() != null) ? AGE_BYTE : 0;
+        fieldsFlagByte |= (animal.getMoveType() != null) ? MOVE_TYPE_BYTE : 0;
+        fieldsFlagByte |= (animal.getId() != null) ? ID_BYTE : 0;
+        fieldsFlagByte |= (animal.getLivingEnvironment() != null) ? LIVING_ENVIRONMENT_BYTE : 0;
+        return fieldsFlagByte;
+    }
+
     public void customSerialize(List<Animal> animals, String fileName) {
         Path filePath = Paths.get(fileName);
         try (DataOutputStream out = new DataOutputStream(Files.newOutputStream(filePath))) {
             for (Animal animal : animals) {
                 if (animal == null) {
                     out.writeByte(0);
-                } else {
-                    out.writeByte(1);
+                    continue;
+                }
 
-                    out.writeByte(animal.isPet() ? 1 : 0);
-                    out.writeByte(animal.isWild() ? 1 : 0);
+                int animalFieldsFlag = getAnimalFieldsFlag(animal);
+                out.writeByte(animalFieldsFlag);
 
-                    Integer legsCount = animal.getLegsCount();
-                    out.writeByte(assertNullGetBit(legsCount));
-                    if (legsCount != null) {
-                        out.writeByte(legsCount);
-                    }
+                Integer legsCount = animal.getLegsCount();
+                if (legsCount != null) {
+                    out.writeByte(legsCount);
+                }
 
-                    String name = animal.getName();
-                    out.writeByte(assertNullGetBit(name));
-                    if (name != null) {
-                        out.writeUTF(name);
-                    }
+                String name = animal.getName();
+                if (name != null) {
+                    out.writeUTF(name);
+                }
 
-                    Double age = animal.getAge();
-                    out.writeByte(assertNullGetBit(age));
-                    if (age != null) {
-                        out.writeDouble(age);
-                    }
+                Double age = animal.getAge();
+                if (age != null) {
+                    out.writeDouble(age);
+                }
 
-                    MoveType moveType = animal.getMoveType();
-                    out.writeByte(assertNullGetBit(moveType));
-                    if (moveType != null) {
-                        int enumIndex = -1;
-                        for (int i = 0; i < MoveType.values().length; i++) {
-                            if (MoveType.values()[i] == moveType) {
-                                enumIndex = i;
-                                break;
-                            }
-                        }
-                        out.writeByte(enumIndex);
-                    }
-
-                    Byte id = animal.getId();
-                    out.writeByte(assertNullGetBit(id));
-                    if (id != null) {
-                        out.writeByte(id);
-                    }
-
-                    Animal.LivingEnvironment lE = animal.getLivingEnvironment();
-                    out.writeByte(assertNullGetBit(lE));
-                    if (lE != null) {
-                        out.writeDouble(lE.getTemperature());
-                        Weather weather = lE.getWeather();
-                        out.writeByte(assertNullGetBit(weather));
-                        if (weather != null) {
-                            int enumIndex = -1;
-                            for (int i = 0; i < Weather.values().length; i++) {
-                                if (Weather.values()[i] == weather) {
-                                    enumIndex = i;
-                                    break;
-                                }
-                            }
-                            out.writeByte(enumIndex);
+                MoveType moveType = animal.getMoveType();
+                if (moveType != null) {
+                    for (int i = 0; i < MoveType.values().length; i++) {
+                        if (MoveType.values()[i] == moveType) {
+                            out.writeByte(i);
+                            break;
                         }
                     }
                 }
+
+                Byte id = animal.getId();
+                if (id != null) {
+                    out.writeByte(id);
+                }
+
+                Animal.LivingEnvironment livingEnvironment = animal.getLivingEnvironment();
+                if (livingEnvironment != null) {
+                    byte livingEnvironmentFieldsFlag = (livingEnvironment.getWeather() != null) ? WEATHER_BYTE : 0b0;
+                    out.writeByte(livingEnvironmentFieldsFlag);
+                    out.writeDouble(livingEnvironment.getTemperature());
+                    Weather weather = livingEnvironment.getWeather();
+                    if (livingEnvironment.getWeather() != null) {
+                        for (int i = 0; i < Weather.values().length; i++) {
+                            if (Weather.values()[i] == weather) {
+                                out.writeByte(i);
+                                break;
+                            }
+                        }
+                    }
+                }
+
                 out.flush();
             }
         } catch (IOException e) {
@@ -239,56 +253,55 @@ public class Serializer {
     public List<Animal> customDeserialize(String fileName) {
         Path filePath = Paths.get(fileName);
         List<Animal> animalList = new ArrayList<>();
-        try (InputStream inputStream = Files.newInputStream(filePath);
-             DataInputStream dataInputStream = new DataInputStream(inputStream)) {
-            while (inputStream.available() > 0) {
-                Animal newAnimal = null;
-                if (dataInputStream.readByte() > 0) {
-                    boolean isPet = dataInputStream.readByte() > 0;
-                    boolean isWild = dataInputStream.readByte() > 0;
-                    Integer legsCount = null;
-                    String name = null;
-                    Double age = null;
-                    MoveType moveType = null;
-                    Byte id = null;
-
-                    if (dataInputStream.readByte() > 0) {
-                        legsCount = (int) dataInputStream.readByte();
-                    }
-                    if (dataInputStream.readByte() > 0) {
-                        name = dataInputStream.readUTF();
-                    }
-                    if (dataInputStream.readByte() > 0) {
-                        age = dataInputStream.readDouble();
-                    }
-                    if (dataInputStream.readByte() > 0) {
-                        moveType = MoveType.values()[dataInputStream.readByte()];
-                    }
-                    if (dataInputStream.readByte() > 0) {
-                        id = dataInputStream.readByte();
-                    }
-
-                    Animal.LivingEnvironment lE = null;
-                    if (dataInputStream.readByte() > 0) {
-                        double temperature = dataInputStream.readDouble();
-                        Weather weather = null;
-                        if (dataInputStream.readByte() > 0) {
-                            weather = Weather.values()[dataInputStream.readByte()];
-                        }
-                        lE = new Animal.LivingEnvironment(temperature, weather);
-                    }
-
-                    newAnimal = new Animal(isPet, isWild, legsCount, name, age, moveType, id, lE);
+        try (DataInputStream in = new DataInputStream(Files.newInputStream(filePath))) {
+            while (in.available() > 0) {
+                int animalFieldsFlag = in.readByte();
+                if (animalFieldsFlag == 0) {
+                    animalList.add(null);
+                    continue;
                 }
+
+                boolean isPet = (animalFieldsFlag & IS_PET_BYTE) > 0;
+                boolean isWild = (animalFieldsFlag & IS_WILD_BYTE) > 0;
+                Integer legsCount = null;
+                String name = null;
+                Double age = null;
+                MoveType moveType = null;
+                Byte id = null;
+
+                if ((animalFieldsFlag & LEGS_COUNT_BYTE) > 0) {
+                    legsCount = (int) in.readByte();
+                }
+                if ((animalFieldsFlag & NAME_BYTE) > 0) {
+                    name = in.readUTF();
+                }
+                if ((animalFieldsFlag & AGE_BYTE) > 0) {
+                    age = in.readDouble();
+                }
+                if ((animalFieldsFlag & MOVE_TYPE_BYTE) > 0) {
+                    moveType = MoveType.values()[in.readByte()];
+                }
+                if ((animalFieldsFlag & ID_BYTE) > 0) {
+                    id = in.readByte();
+                }
+
+                Animal.LivingEnvironment lE = null;
+                if ((animalFieldsFlag & LIVING_ENVIRONMENT_BYTE) > 0) {
+                    int livingEnvironmentFieldsFLag = in.readByte();
+                    double temperature = in.readDouble();
+                    Weather weather = null;
+                    if ((livingEnvironmentFieldsFLag & WEATHER_BYTE) > 0) {
+                        weather = Weather.values()[in.readByte()];
+                    }
+                    lE = new Animal.LivingEnvironment(temperature, weather);
+                }
+
+                Animal newAnimal = new Animal(isPet, isWild, legsCount, name, age, moveType, id, lE);
                 animalList.add(newAnimal);
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
         return animalList;
-    }
-
-    private static int assertNullGetBit(Object object) {
-        return object == null ? 0 : 1;
     }
 }

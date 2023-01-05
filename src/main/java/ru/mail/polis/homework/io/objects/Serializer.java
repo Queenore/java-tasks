@@ -154,6 +154,7 @@ public class Serializer {
      * @param animals  Список животных для сериализации
      * @param fileName файл, в который "пишем" животных
      */
+    private static final int WEATHER_BYTE = 0b1;
     private static final int IS_PET_BYTE = 0b1;
     private static final int IS_WILD_BYTE = 0b10;
     private static final int LEGS_COUNT_BYTE = 0b100;
@@ -162,7 +163,6 @@ public class Serializer {
     private static final int MOVE_TYPE_BYTE = 0b100000;
     private static final int ID_BYTE = 0b1000000;
     private static final int LIVING_ENVIRONMENT_BYTE = 0b10000000;
-    private static final byte WEATHER_BYTE = 0b1;
 
     private int getAnimalFieldsFlag(Animal animal) {
         int fieldsFlagByte = 0;
@@ -221,7 +221,7 @@ public class Serializer {
 
                 Animal.LivingEnvironment livingEnvironment = animal.getLivingEnvironment();
                 if (livingEnvironment != null) {
-                    byte livingEnvironmentFieldsFlag = (livingEnvironment.getWeather() != null) ? WEATHER_BYTE : 0b0;
+                    int livingEnvironmentFieldsFlag = (livingEnvironment.getWeather() != null) ? WEATHER_BYTE : 0b0;
                     out.writeByte(livingEnvironmentFieldsFlag);
                     out.writeDouble(livingEnvironment.getTemperature());
                     Weather weather = livingEnvironment.getWeather();

@@ -3,7 +3,9 @@ package ru.mail.polis.homework.reflection;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Objects;
 
 import static java.util.stream.Collectors.joining;
 
@@ -67,7 +69,7 @@ public class ReflectionToStringHelper {
                     .collect(joining(", "));
             resultString.append(fieldsStringRepresentation);
             clazz = clazz.getSuperclass();
-            if (clazz != null && clazz != Object.class) {
+            if (clazz != Object.class) {
                 resultString.append(", ");
             } else {
                 break;
@@ -88,9 +90,10 @@ public class ReflectionToStringHelper {
             value = field.get(object);
         } catch (IllegalAccessException e) {
             throw new IllegalArgumentException();
-        }
-        if (wasInaccessible) {
-            field.setAccessible(false);
+        } finally {
+            if (wasInaccessible) {
+                field.setAccessible(false);
+            }
         }
         if (Objects.isNull(value)) {
             return "null";

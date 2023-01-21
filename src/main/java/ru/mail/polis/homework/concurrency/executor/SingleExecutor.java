@@ -20,9 +20,9 @@ public class SingleExecutor implements Executor {
     public SingleExecutor() {
         this.singleThread = new Thread(() -> {
             while (!isShutDown || !commandQueue.isEmpty()) {
-                try {
-                    commandQueue.poll().run();
-                } catch (NullPointerException ignored) {
+                Runnable command = commandQueue.poll();
+                if (command != null) {
+                    command.run();
                 }
             }
         });
@@ -37,6 +37,8 @@ public class SingleExecutor implements Executor {
     public void execute(Runnable command) {
         if (isShutDown) {
             throw new RejectedExecutionException();
+        } else if (command == null) {
+            throw new IllegalArgumentException();
         }
         commandQueue.add(command);
     }

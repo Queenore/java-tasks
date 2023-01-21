@@ -19,26 +19,25 @@ public class SimpleExecutor implements Executor {
 
     private final int maxThreadCount;
     private volatile boolean isShutDown = false;
-    private final AtomicInteger readyThreadsCount = new AtomicInteger(0);
-    private final ConcurrentLinkedQueue<Runnable> commandQueue = new ConcurrentLinkedQueue<>();
-    private final CopyOnWriteArrayList<SimpleThread> threadPool = new CopyOnWriteArrayList<>();
+    private final AtomicInteger readyThreadsCount;
+    private final ConcurrentLinkedQueue<Runnable> commandQueue;
+    private final CopyOnWriteArrayList<SimpleThread> threadPool;
 
     public SimpleExecutor(int maxThreadCount) {
         this.maxThreadCount = maxThreadCount;
+        this.readyThreadsCount = new AtomicInteger(0);
+        this.commandQueue = new ConcurrentLinkedQueue<>();
+        this.threadPool = new CopyOnWriteArrayList<>();
     }
 
     private class SimpleThread extends Thread {
-        public SimpleThread() {
-            start();
-        }
-
         @Override
         public void run() {
             while (!isShutDown) {
                 readyThreadsCount.incrementAndGet();
                 if (!commandQueue.isEmpty()) {
                     Runnable command = commandQueue.poll();
-                    if (Objects.nonNull(command)) {
+                    if (command != null) {
                         readyThreadsCount.decrementAndGet();
                         command.run();
                     }
@@ -55,15 +54,19 @@ public class SimpleExecutor implements Executor {
     public void execute(Runnable command) {
         if (isShutDown) {
             throw new RejectedExecutionException();
-        } else if (Objects.isNull(command)) {
-            return;
+        } else if (command == null) {
+            throw new IllegalArgumentException();
         }
-        commandQueue.add(command);
-        synchronized (this) {
-            if (readyThreadsCount.get() == 0 && getLiveThreadsCount() < maxThreadCount) {
-                threadPool.add(new SimpleThread());
+        if (readyThreadsCount.get() == 0 && getLiveThreadsCount() < maxThreadCount) {
+            synchronized (this) {
+                if (readyThreadsCount.get() == 0 && getLiveThreadsCount() < maxThreadCount) {
+                    SimpleThread thread = new SimpleThread();
+                    thread.start();
+                    threadPool.add(thread);
+                }
             }
         }
+        commandQueue.add(command);
     }
 
     /**
